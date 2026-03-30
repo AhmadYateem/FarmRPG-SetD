@@ -10,4 +10,7 @@ public class GameEvents : MonoBehaviour
     // dialogue events — SET D fires these when NPC talks
     public static UnityEvent OnDialogueStart = new UnityEvent();
     public static UnityEvent OnDialogueEnd   = new UnityEvent();
+
+    // time event — SET C fires this, we subscribe in NPCSchedule (milestone 3)
+    public static UnityEvent<int> OnTimeChanged = new UnityEvent<int>();
 }
