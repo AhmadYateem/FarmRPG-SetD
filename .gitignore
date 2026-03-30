@@ -73,5 +73,11 @@ ignore.conf
 # Project instructions — not for the repo
 Instructions.md
 
+# Meeting prep (LaTeX) — personal notes
+MeetingPrep.*
+
 # Downloaded assets pack — too big for git
 CMPS288_Project_Assets/
+
+# Dialogue tree guide — not for the repo
+FarmRPG_DialogueTree_Guide.md
