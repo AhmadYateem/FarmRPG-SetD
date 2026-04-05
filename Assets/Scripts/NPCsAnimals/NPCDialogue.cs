@@ -1,24 +1,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Dialogue tree system — supports branching NPC conversations.
 /// The whole tree is built in the Inspector using DialogueNode/DialogueChoice data.
+/// Now integrates with FriendshipManager to pick dialogue based on friendship tier.
 /// </summary>
 public class NPCDialogue : MonoBehaviour
 {
+    // ── NPC identity ──────────────────────────────────────
+    [SerializeField] private string _npcName = "Villager";
+
     // ── tree data ─────────────────────────────────────────
     [SerializeField] private DialogueNode _rootNode;
 
+    // ── friendship-tier dialogue (optional — overrides _rootNode) ──
+    [SerializeField] private NPCData _npcData;
+
     // ── UI references (drag from Hierarchy) ───────────────
     [SerializeField] private GameObject _dialoguePanel;
+    [SerializeField] private Text       _npcNameText;
     [SerializeField] private Text       _npcText;
     [SerializeField] private GameObject _choiceButtonPrefab;
     [SerializeField] private Transform  _choicesContainer;
 
     // ── interaction settings ──────────────────────────────
-    [SerializeField] private KeyCode _interactKey   = KeyCode.E;
     [SerializeField] private float   _interactRange = 2f;
 
     // ── internal state ────────────────────────────────────
@@ -35,6 +43,13 @@ public class NPCDialogue : MonoBehaviour
 
         // hide dialogue box at the start
         if (_dialoguePanel != null) _dialoguePanel.SetActive(false);
+
+        // register NPC with friendship system
+        if (FriendshipManager.Instance != null)
+            FriendshipManager.Instance.RegisterNPC(_npcName);
+
+        // sync NPCData name
+        if (_npcData != null) _npcData.npcName = _npcName;
     }
 
     void Update()
@@ -44,7 +59,7 @@ public class NPCDialogue : MonoBehaviour
         float dist = Vector3.Distance(transform.position, _playerTransform.position);
 
         // press E near the NPC to start talking
-        if (!_isActive && dist <= _interactRange && Input.GetKeyDown(_interactKey))
+        if (!_isActive && dist <= _interactRange && Keyboard.current[Key.E].wasPressedThisFrame)
         {
             StartDialogue();
         }
@@ -55,12 +70,15 @@ public class NPCDialogue : MonoBehaviour
     [ContextMenu("Start Dialogue")]
     public void StartDialogue()
     {
-        if (_rootNode == null) { Debug.LogWarning("No dialogue tree — set up Root Node in Inspector!"); return; }
+        // pick the right dialogue tree based on friendship tier
+        DialogueNode root = GetDialogueRoot();
+        if (root == null) { Debug.LogWarning("No dialogue tree — set up Root Node in Inspector!"); return; }
 
         _isActive = true;
         _dialoguePanel.SetActive(true);
+        if (_npcNameText != null) _npcNameText.text = _npcName;
         GameEvents.OnDialogueStart.Invoke();
-        ShowNode(_rootNode);
+        ShowNode(root);
     }
 
     [ContextMenu("End Dialogue")]
@@ -69,10 +87,27 @@ public class NPCDialogue : MonoBehaviour
         _isActive = false;
         _dialoguePanel.SetActive(false);
         ClearChoiceButtons();
+
+        // increase friendship when conversation ends
+        if (FriendshipManager.Instance != null)
+            FriendshipManager.Instance.OnTalkedToNPC(_npcName);
+
         GameEvents.OnDialogueEnd.Invoke();
     }
 
     // ── private methods ───────────────────────────────────
+
+    private DialogueNode GetDialogueRoot()
+    {
+        // if NPCData is wired up and has friendship-tier dialogues, use those
+        if (_npcData != null && FriendshipManager.Instance != null)
+        {
+            _npcData.friendshipPoints = FriendshipManager.Instance.GetFriendship(_npcName);
+            DialogueNode tierNode = _npcData.GetDialogueForCurrentTier();
+            if (tierNode != null) return tierNode;
+        }
+        return _rootNode;
+    }
 
     private void ShowNode(DialogueNode node)
     {
