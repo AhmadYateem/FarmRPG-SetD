@@ -10,6 +10,7 @@ public class FixM3Scene
     [MenuItem("Tools/Fix M3 Scene")]
     public static void Fix()
     {
+        FixSpriteImportSettings();
         FixPositions();
         FixSprites();
         FixDialoguePanel();
@@ -20,6 +21,51 @@ public class FixM3Scene
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
         Debug.Log("=== M3 Scene Fix Complete ===");
+    }
+
+    static void FixSpriteImportSettings()
+    {
+        // All pixel art sprites must use: pixelsPerUnit=16, filterMode=Point, spriteMode=Single
+        string[] spritePaths = {
+            "Assets/Art/Sprites/npc_farmer.png",
+            "Assets/Art/Sprites/npc_villager.png",
+            "Assets/Art/Sprites/animal_cow.png",
+            "Assets/Art/Sprites/animal_sheep.png",
+        };
+
+        foreach (string path in spritePaths)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) { Debug.LogWarning($"[Fix] No importer for {path}"); continue; }
+
+            bool changed = false;
+
+            if (importer.spritePixelsPerUnit != 16f)
+            {
+                importer.spritePixelsPerUnit = 16f;
+                changed = true;
+            }
+            if (importer.filterMode != FilterMode.Point)
+            {
+                importer.filterMode = FilterMode.Point;
+                changed = true;
+            }
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                importer.SaveAndReimport();
+                Debug.Log($"[Fix] Reimported {path}: PPU=16, Point filter, Uncompressed");
+            }
+            else
+            {
+                Debug.Log($"[Fix] {path} already correct");
+            }
+        }
     }
 
     static void FixPositions()
