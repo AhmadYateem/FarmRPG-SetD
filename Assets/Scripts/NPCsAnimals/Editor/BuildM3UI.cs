@@ -26,16 +26,16 @@ public class BuildM3UI
     static void BuildTimePanel(Transform parent)
     {
         // Panel in top-left corner
-        GameObject panel = CreatePanel("TimePanel", parent, new Vector2(10, -10), new Vector2(220, 100), new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1));
+        GameObject panel = CreatePanel("TimePanel", parent, new Vector2(10, -10), new Vector2(240, 110), new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1));
 
-        // Time display text
-        GameObject textObj = CreateText("TimeText", panel.transform, "Day 1  6:00", 20, TextAnchor.MiddleCenter, new Vector2(0, 20), new Vector2(200, 30));
+        // Time display text — negative Y so it stays INSIDE the panel
+        GameObject textObj = CreateText("TimeText", panel.transform, "Day 1  6:00", 18, TextAnchor.MiddleCenter, new Vector2(10, -8), new Vector2(220, 32));
 
         // Advance Time button
-        GameObject btnTime = CreateButton("AdvanceTimeBtn", panel.transform, "+1 Hour", new Vector2(0, -15), new Vector2(90, 30));
+        GameObject btnTime = CreateButton("AdvanceTimeBtn", panel.transform, "+1 Hour", new Vector2(12, -48), new Vector2(104, 34));
 
         // Advance Day button
-        GameObject btnDay = CreateButton("AdvanceDayBtn", panel.transform, "Next Day", new Vector2(100, -15), new Vector2(90, 30));
+        GameObject btnDay = CreateButton("AdvanceDayBtn", panel.transform, "Next Day", new Vector2(124, -48), new Vector2(104, 34));
 
         // Wire MockTimeManager
         MockTimeManager tm = Object.FindFirstObjectByType<MockTimeManager>();
