@@ -1,8 +1,11 @@
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.U2D.Sprites;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
-/// Comprehensive scene fix: positions, sprites, UI visibility, camera.
+/// Comprehensive scene fix — sprite slicing, positions, UI, camera.
 /// Run from menu: Tools > Fix M3 Scene
 /// </summary>
 public class FixM3Scene
@@ -10,113 +13,84 @@ public class FixM3Scene
     [MenuItem("Tools/Fix M3 Scene")]
     public static void Fix()
     {
-        FixSpriteImportSettings();
+        SliceAndImportSprites();
+        AssetDatabase.Refresh();
+
         FixPositions();
-        FixSprites();
+        AssignFirstFrameSprites();
         FixDialoguePanel();
         FixCamera();
 
-        // Mark scene dirty so changes are saved
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
 
         Debug.Log("=== M3 Scene Fix Complete ===");
     }
 
-    static void FixSpriteImportSettings()
-    {
-        // All pixel art sprites must use: pixelsPerUnit=16, filterMode=Point, spriteMode=Single
-        string[] spritePaths = {
-            "Assets/Art/Sprites/npc_farmer.png",
-            "Assets/Art/Sprites/npc_villager.png",
-            "Assets/Art/Sprites/animal_cow.png",
-            "Assets/Art/Sprites/animal_sheep.png",
-        };
+    // ── SPRITE SLICING ──────────────────────────────────────
 
-        foreach (string path in spritePaths)
+    static void SliceAndImportSprites()
+    {
+        // NPC sheets: 864x64, 9 frames, grid cell 96x64
+        SliceSheet("Assets/Art/Sprites/npc_farmer.png",   "npc_farmer",   96, 64, 9);
+        SliceSheet("Assets/Art/Sprites/npc_villager.png", "npc_villager", 96, 64, 9);
+
+        // Animal sheets: 128x32, 4 frames, grid cell 32x32
+        SliceSheet("Assets/Art/Sprites/animal_cow.png",   "animal_cow",   32, 32, 4);
+        SliceSheet("Assets/Art/Sprites/animal_sheep.png", "animal_sheep", 32, 32, 4);
+    }
+
+    static void SliceSheet(string path, string baseName, int cellW, int cellH, int count)
+    {
+        TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer == null) { Debug.LogWarning($"[Fix] No importer: {path}"); return; }
+
+        importer.spriteImportMode = SpriteImportMode.Multiple;
+        importer.spritePixelsPerUnit = 16f;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+
+        // Use ISpriteEditorDataProvider for Unity 6+
+        var factory = new SpriteDataProviderFactories();
+        factory.Init();
+        var dataProvider = factory.GetSpriteEditorDataProviderFromObject(importer);
+        dataProvider.InitSpriteEditorDataProvider();
+
+        var spriteRects = new List<SpriteRect>();
+        for (int i = 0; i < count; i++)
         {
-            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer == null) { Debug.LogWarning($"[Fix] No importer for {path}"); continue; }
-
-            bool changed = false;
-
-            if (importer.spritePixelsPerUnit != 16f)
+            var sr = new SpriteRect
             {
-                importer.spritePixelsPerUnit = 16f;
-                changed = true;
-            }
-            if (importer.filterMode != FilterMode.Point)
-            {
-                importer.filterMode = FilterMode.Point;
-                changed = true;
-            }
-            if (importer.textureCompression != TextureImporterCompression.Uncompressed)
-            {
-                importer.textureCompression = TextureImporterCompression.Uncompressed;
-                changed = true;
-            }
-
-            if (changed)
-            {
-                importer.SaveAndReimport();
-                Debug.Log($"[Fix] Reimported {path}: PPU=16, Point filter, Uncompressed");
-            }
-            else
-            {
-                Debug.Log($"[Fix] {path} already correct");
-            }
+                name = $"{baseName}_{i}",
+                rect = new Rect(i * cellW, 0, cellW, cellH),
+                alignment = SpriteAlignment.Center,
+                pivot = new Vector2(0.5f, 0.5f),
+                spriteID = GUID.Generate()
+            };
+            spriteRects.Add(sr);
         }
+
+        dataProvider.SetSpriteRects(spriteRects.ToArray());
+        dataProvider.Apply();
+
+        var assetImporter = dataProvider.targetObject as AssetImporter;
+        assetImporter.SaveAndReimport();
+        Debug.Log($"[Fix] Sliced {path}: {count} frames @ {cellW}x{cellH}, PPU=16");
     }
 
-    static void FixPositions()
+    // ── SPRITE ASSIGNMENT ───────────────────────────────────
+
+    static void AssignFirstFrameSprites()
     {
-        // All positions must be Z=0 for 2D, spread on X/Y
-        SetPos("Player",          0f,    0f);
-
-        // NPCs spread out so they're clearly visible
-        SetPos("NPC_ShopKeeper", -3f,    0f);
-        SetPos("NPC_Farmer",      4f,    0f);
-        SetPos("NPC_Villager",   -6f,    2f);
-
-        // Animals in a farm area (right side, lower)
-        SetPos("Animal_Chicken",  3f,   -2f);
-        SetPos("Animal_Cow",      6f,   -2f);
-        SetPos("Animal_Sheep",    6f,    1f);
-
-        // Waypoints spread across map — Z=0!
-        SetPos("WP_Home",       -8f,    3f);
-        SetPos("WP_Shop",       -3f,   -3f);
-        SetPos("WP_Farm",        7f,   -3f);
-        SetPos("WP_Park",        0f,    4f);
-
-        // Non-visible objects
-        SetPos("EventSystem",    0f,    0f);
-        SetPos("GameManagers",   0f,    0f);
-
-        Debug.Log("[Fix] All positions set to 2D layout (Z=0)");
+        AssignSubSprite("NPC_ShopKeeper", "Assets/Art/Sprites/npc_shopkeeper.png", "npc_shopkeeper_0");
+        AssignSubSprite("NPC_Farmer",     "Assets/Art/Sprites/npc_farmer.png",     "npc_farmer_0");
+        AssignSubSprite("NPC_Villager",   "Assets/Art/Sprites/npc_villager.png",   "npc_villager_0");
+        AssignSubSprite("Animal_Chicken", "Assets/Art/Sprites/animal_chicken.png", "animal_chicken_0");
+        AssignSubSprite("Animal_Cow",     "Assets/Art/Sprites/animal_cow.png",     "animal_cow_0");
+        AssignSubSprite("Animal_Sheep",   "Assets/Art/Sprites/animal_sheep.png",   "animal_sheep_0");
     }
 
-    static void SetPos(string name, float x, float y)
-    {
-        GameObject go = GameObject.Find(name);
-        if (go == null) { Debug.LogWarning($"[Fix] GameObject not found: {name}"); return; }
-        go.transform.position = new Vector3(x, y, 0f);
-    }
-
-    static void FixSprites()
-    {
-        // Load all sprites from Assets/Art/Sprites/
-        AssignSprite("NPC_ShopKeeper", "Assets/Art/Sprites/npc_shopkeeper.png");
-        AssignSprite("NPC_Farmer",     "Assets/Art/Sprites/npc_farmer.png");
-        AssignSprite("NPC_Villager",   "Assets/Art/Sprites/npc_villager.png");
-        AssignSprite("Animal_Chicken", "Assets/Art/Sprites/animal_chicken.png");
-        AssignSprite("Animal_Cow",     "Assets/Art/Sprites/animal_cow.png");
-        AssignSprite("Animal_Sheep",   "Assets/Art/Sprites/animal_sheep.png");
-
-        Debug.Log("[Fix] All sprites assigned");
-    }
-
-    static void AssignSprite(string goName, string assetPath)
+    static void AssignSubSprite(string goName, string texturePath, string spriteName)
     {
         GameObject go = GameObject.Find(goName);
         if (go == null) { Debug.LogWarning($"[Fix] Not found: {goName}"); return; }
@@ -124,36 +98,65 @@ public class FixM3Scene
         SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
         if (sr == null) { Debug.LogWarning($"[Fix] No SpriteRenderer on {goName}"); return; }
 
-        // Load the sprite from the asset
-        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-        if (sprite == null)
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(texturePath);
+        Sprite target = null;
+        foreach (Object asset in assets)
         {
-            // Try loading all sub-assets (sprite might be a sub-asset of the texture)
-            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-            foreach (Object asset in assets)
+            if (asset is Sprite s && s.name == spriteName)
             {
-                if (asset is Sprite s)
-                {
-                    sprite = s;
-                    break;
-                }
+                target = s;
+                break;
             }
         }
 
-        if (sprite != null)
+        if (target != null)
         {
-            sr.sprite = sprite;
-            Debug.Log($"[Fix] Sprite assigned to {goName}: {sprite.name}");
+            sr.sprite = target;
+            EditorUtility.SetDirty(sr);
+            Debug.Log($"[Fix] Assigned {spriteName} to {goName}");
         }
         else
         {
-            Debug.LogWarning($"[Fix] Could not load sprite from {assetPath}");
+            Debug.LogWarning($"[Fix] Sprite '{spriteName}' not found in {texturePath}");
         }
     }
 
+    // ── POSITIONS ───────────────────────────────────────────
+
+    static void FixPositions()
+    {
+        SetPos("Player",          0f,    0f);
+
+        SetPos("NPC_ShopKeeper", -4f,    0f);
+        SetPos("NPC_Farmer",      5f,    2f);
+        SetPos("NPC_Villager",   -6f,    3f);
+
+        SetPos("Animal_Chicken",  3f,   -3f);
+        SetPos("Animal_Cow",      7f,   -3f);
+        SetPos("Animal_Sheep",   -3f,   -4f);
+
+        SetPos("WP_Home",       -8f,    4f);
+        SetPos("WP_Shop",       -4f,   -2f);
+        SetPos("WP_Farm",        7f,   -2f);
+        SetPos("WP_Park",        2f,    5f);
+
+        SetPos("EventSystem",    0f,    0f);
+        SetPos("GameManagers",   0f,    0f);
+
+        Debug.Log("[Fix] Positions set (Z=0, well spaced)");
+    }
+
+    static void SetPos(string name, float x, float y)
+    {
+        GameObject go = GameObject.Find(name);
+        if (go == null) return;
+        go.transform.position = new Vector3(x, y, 0f);
+    }
+
+    // ── UI FIXES ────────────────────────────────────────────
+
     static void FixDialoguePanel()
     {
-        // Find dialogue panel in Canvas and ensure it's hidden
         Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null) return;
 
@@ -168,17 +171,20 @@ public class FixM3Scene
         }
     }
 
+    // ── CAMERA ──────────────────────────────────────────────
+
     static void FixCamera()
     {
-        // Make camera orthographic with good size for 2D viewing
         Camera cam = Camera.main;
         if (cam == null) return;
 
         cam.orthographic = true;
-        cam.orthographicSize = 7f;
+        cam.orthographicSize = 8f;
         cam.transform.position = new Vector3(0f, 0f, -10f);
-        cam.backgroundColor = new Color(0.12f, 0.14f, 0.25f); // dark blue background
+        cam.backgroundColor = new Color(0.12f, 0.14f, 0.25f);
+        EditorUtility.SetDirty(cam);
+        EditorUtility.SetDirty(cam.gameObject);
 
-        Debug.Log("[Fix] Camera set to orthographic, size 7");
+        Debug.Log("[Fix] Camera: orthographic, size 8");
     }
 }

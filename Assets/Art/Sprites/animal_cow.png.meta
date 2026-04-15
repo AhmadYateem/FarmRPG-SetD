@@ -55,7 +55,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -125,19 +125,19 @@ TextureImporter:
       name: animal_cow_0
       rect:
         serializedVersion: 2
-        x: 3
-        y: 2
-        width: 25
-        height: 28
+        x: 0
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 44c47ab2a6174c810800000000000000
+      spriteID: 5e88740f6ca46fa498cde0f42f81ec71
       internalID: 1784676053158415428
       vertices: []
       indices: 
@@ -147,19 +147,19 @@ TextureImporter:
       name: animal_cow_1
       rect:
         serializedVersion: 2
-        x: 36
-        y: 2
-        width: 23
-        height: 27
+        x: 32
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a475f80e5281a7870800000000000000
+      spriteID: 3ecbc7e2166d53447885117cbdc1aeeb
       internalID: 8681277782670399306
       vertices: []
       indices: 
@@ -169,19 +169,19 @@ TextureImporter:
       name: animal_cow_2
       rect:
         serializedVersion: 2
-        x: 67
-        y: 2
-        width: 25
-        height: 26
+        x: 64
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d010950922ff9bb50800000000000000
+      spriteID: f73bd60d235c26949a5e8a367c698fa2
       internalID: 6609594452058636557
       vertices: []
       indices: 
@@ -191,19 +191,19 @@ TextureImporter:
       name: animal_cow_3
       rect:
         serializedVersion: 2
-        x: 99
-        y: 2
-        width: 26
-        height: 27
+        x: 96
+        y: 0
+        width: 32
+        height: 32
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: fa3c50f6348bafb80800000000000000
+      spriteID: ccaa26846b0dc4d4e81ff713a3de2e86
       internalID: -8360167158494936145
       vertices: []
       indices: 
