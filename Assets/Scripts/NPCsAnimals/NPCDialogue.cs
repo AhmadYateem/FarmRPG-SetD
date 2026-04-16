@@ -63,6 +63,12 @@ public class NPCDialogue : MonoBehaviour
         {
             StartDialogue();
         }
+
+        // auto-close if the player walks out of range
+        if (_isActive && dist > _interactRange * 1.5f)
+        {
+            EndDialogue();
+        }
     }
 
     // ── public methods ────────────────────────────────────
@@ -146,8 +152,16 @@ public class NPCDialogue : MonoBehaviour
 
     private void ClearChoiceButtons()
     {
+        // Destroy tracked buttons
         foreach (GameObject btn in _activeButtons)
-            Destroy(btn);
+            if (btn != null) Destroy(btn);
         _activeButtons.Clear();
+
+        // Also destroy any stale buttons left by a different NPC that shared this container
+        if (_choicesContainer != null)
+        {
+            for (int i = _choicesContainer.childCount - 1; i >= 0; i--)
+                Destroy(_choicesContainer.GetChild(i).gameObject);
+        }
     }
 }
