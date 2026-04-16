@@ -946,13 +946,15 @@ public class FixAllM3
     static void AddBarnCoopLabels()
     {
         // Labels are world-space TextMeshes near animal areas
-        CreateWorldLabel("BarnLabel",  "Barn",  new Vector3(7f, -0.5f, 0f));
-        CreateWorldLabel("CoopLabel",  "Coop",  new Vector3(3f, -2.5f, 0f));
+        // Animal_Cow is at (7,-3), Animal_Chicken is at (3,-3); label 1.5 units above each center
+        CreateWorldLabel("BarnLabel",  "Barn",  new Vector3(7f, -1.5f, 0f));
+        CreateWorldLabel("CoopLabel",  "Coop",  new Vector3(3f, -1.5f, 0f));
     }
 
     static void CreateWorldLabel(string goName, string text, Vector3 position)
     {
-        if (GameObject.Find(goName) != null) return;
+        var existing = GameObject.Find(goName);
+        if (existing != null) Object.DestroyImmediate(existing);
 
         GameObject go = new GameObject(goName);
         go.transform.position = position;
