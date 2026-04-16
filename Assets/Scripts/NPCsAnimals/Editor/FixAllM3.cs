@@ -26,6 +26,8 @@ public class FixAllM3
         FixProductionPanelLayout();
         WireCollectAllButton();
         FixNPCNames();
+        WireAnimalAnimators();
+        SetupDayNightCycle();
 
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
@@ -734,6 +736,87 @@ public class FixAllM3
         }
 
         EditorUtility.SetDirty(go);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  15. WIRE ANIMAL ANIMATORS (all animals get controllers)
+    // ═══════════════════════════════════════════════════════
+
+    static void WireAnimalAnimators()
+    {
+        // Map animal type keywords to controller paths
+        var controllerMap = new Dictionary<string, string>
+        {
+            { "Chicken", "Assets/Art/Animations/Animal_Chicken.controller" },
+            { "Cow",     "Assets/Art/Animations/Animal_Cow.controller" },
+            { "Sheep",   "Assets/Art/Animations/Animal_Sheep.controller" }
+        };
+
+        AnimalController[] animals = Object.FindObjectsByType<AnimalController>(FindObjectsSortMode.None);
+        foreach (AnimalController ac in animals)
+        {
+            string goName = ac.gameObject.name;
+
+            // Determine which controller to use
+            string controllerPath = null;
+            foreach (var kv in controllerMap)
+            {
+                if (goName.Contains(kv.Key))
+                { controllerPath = kv.Value; break; }
+            }
+            if (controllerPath == null) continue;
+
+            // Add Animator if missing
+            Animator animator = ac.GetComponent<Animator>();
+            if (animator == null)
+                animator = ac.gameObject.AddComponent<Animator>();
+
+            // Load and assign the controller
+            var ctrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
+            if (ctrl != null)
+            {
+                animator.runtimeAnimatorController = ctrl;
+                EditorUtility.SetDirty(animator);
+                Debug.Log($"[FixAll] {goName}: Animator controller set to {ctrl.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[FixAll] Controller not found at {controllerPath}");
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  16. SETUP DAY/NIGHT CYCLE
+    // ═══════════════════════════════════════════════════════
+
+    static void SetupDayNightCycle()
+    {
+        // Add to GameManagers or Camera
+        GameObject managers = GameObject.Find("GameManagers");
+        if (managers == null)
+        {
+            // Try the camera directly
+            Camera cam = Camera.main;
+            if (cam != null) managers = cam.gameObject;
+        }
+        if (managers == null) return;
+
+        if (managers.GetComponent<DayNightCycle>() == null)
+        {
+            managers.AddComponent<DayNightCycle>();
+            EditorUtility.SetDirty(managers);
+            Debug.Log("[FixAll] DayNightCycle added — sky changes with time");
+        }
+
+        // Set initial camera color to morning
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            mainCam.clearFlags = CameraClearFlags.SolidColor;
+            mainCam.backgroundColor = new Color(0.5f, 0.75f, 0.95f); // morning blue
+            EditorUtility.SetDirty(mainCam);
+        }
     }
 
     // ═══════════════════════════════════════════════════════
