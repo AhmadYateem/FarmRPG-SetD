@@ -28,6 +28,8 @@ public class FixAllM3
         FixNPCNames();
         WireAnimalAnimators();
         SetupDayNightCycle();
+        ClampWaypointsToScreen();
+        AddBarnCoopLabels();
 
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
@@ -280,39 +282,57 @@ public class FixAllM3
     static void SetDialogueTrees()
     {
         SetNPCDialogue("NPC_ShopKeeper", "ShopKeeper",
-            "Welcome to the shop. Have a look around.",
-            new[] { "What do you sell?", "Just browsing." },
-            new[] { "Seeds, tools, and animal feed — everything a farmer needs.", "Let me know if you need anything." },
-            "Hey, good to see you again! Need supplies?",
-            new[] { "Got anything new?", "How's business?" },
-            new[] { "Just got some rare seeds in stock! Check them out.", "Can't complain — the farm keeps us all busy." },
-            "My favourite customer! Come in, come in!",
-            new[] { "Any discounts for me?", "How are you?" },
-            new[] { "For you? Always! Take 10 percent off today.", "Better now that you're here, friend!" }
+            "Welcome to my shop. I sell seeds, tools, and animal feed. What can I help you with today?",
+            new[] { "What seeds do you have?", "I need animal feed.", "Just looking around." },
+            new[] { "I have turnip seeds, potato seeds, and some rare melon seeds that just came in from the city market.",
+                    "We carry chicken feed, cow feed, and premium sheep mix. Your animals will love them!",
+                    "Take your time! Everything is on the shelves. Let me know if you have questions." },
+            "Hey there, friend! Good to see a regular face. Business has been picking up lately. Need anything?",
+            new[] { "Got any new stock?", "How is business going?", "Tell me about the village." },
+            new[] { "Just got rare strawberry seeds and a golden watering can! They're limited stock though.",
+                    "Better than ever! The harvest festival brought lots of visitors. I even sold out of pumpkins.",
+                    "This village has been here for generations. The old farm to the east is where it all started." },
+            "My favourite customer! Come in, come in! I saved something special just for you!",
+            new[] { "What did you save for me?", "Any discounts today?", "You're the best, ShopKeeper!" },
+            new[] { "A legendary ancient seed! Plant it and something magical will grow. It's yours, no charge!",
+                    "For you? Always! Take 20 percent off everything today. You've earned it, partner!",
+                    "Aw, you're making me blush! You're the reason I keep this shop running. Here, have a free gift!" }
         );
 
         SetNPCDialogue("NPC_Farmer", "Farmer",
-            "Mornin'. The fields need tending.",
-            new[] { "Need any help?", "Nice farm you have." },
-            new[] { "I could always use an extra pair of hands out here.", "Thanks — it's hard work, but worth every bit." },
-            "Oh hey! Weather's been great for the crops lately.",
-            new[] { "What are you growing?", "Any farming tips?" },
-            new[] { "Tomatoes, corn, and some wheat this season.", "Water your crops early morning — they'll love you for it!" },
-            "Partner! Want to see the new harvest?",
-            new[] { "What did you grow?", "You're the best farmer around!" },
-            new[] { "Best pumpkins I've ever grown! Take some home with you.", "Aw shucks, you're making me blush!" }
+            "Mornin'. The fields need tending, and the animals are hungry. Another long day ahead.",
+            new[] { "Need any help with the farm?", "Nice crops you've got.", "What animals do you raise?" },
+            new[] { "Could always use a hand. The weeds are taking over the south field. If you pull some, I'll pay you!",
+                    "Thanks! These tomatoes took three seasons to perfect. The soil here is something special.",
+                    "Got chickens for eggs, cows for milk, and sheep for wool. Each one needs daily feeding and love." },
+            "Hey! The crops are growing great this season. Must be all that rain we got last week.",
+            new[] { "What are you growing this season?", "Any farming tips for beginners?", "How long have you been farming?" },
+            new[] { "Tomatoes, corn, wheat, and I'm trying pumpkins for the first time. Fingers crossed they grow big!",
+                    "Three rules: water early morning, rotate your crops each season, and always talk to your animals. They grow happier!",
+                    "Going on twenty years now. Started when I was just a kid, learning from my grandmother. Best life there is." },
+            "Partner! I was just thinking about you! Want to see the biggest pumpkin I've ever grown?",
+            new[] { "Show me that pumpkin!", "You're the best farmer in the valley!", "Can I have some of your harvest?" },
+            new[] { "Look at this beauty! It's almost as tall as me! I'm entering it in the festival competition for sure.",
+                    "Ha! I don't know about the best, but I sure do love what I do. Come, let me show you the new barn!",
+                    "Of course! Take some tomatoes and corn home. Good neighbours share the harvest!" }
         );
 
         SetNPCDialogue("NPC_Villager", "Villager",
-            "Oh, hello. Are you new around here?",
-            new[] { "Yes, just moved in.", "What is this place?" },
-            new[] { "Welcome to the village! It's peaceful here.", "Just a small farming village — nothing fancy, but we like it." },
-            "Hey neighbour! Beautiful day, isn't it?",
-            new[] { "It sure is!", "What's new in town?" },
-            new[] { "I love the sunsets here — you should visit the park!", "The harvest festival is coming soon!" },
-            "There you are! I was hoping to see you today!",
-            new[] { "Miss me?", "Want to hang out?" },
-            new[] { "You're my best friend in the whole village!", "Let's go to the park together sometime!" }
+            "Oh, hello there. Are you new around here? I don't think we've met before. Welcome to the village!",
+            new[] { "Yes, I just moved in.", "What is this place like?", "Where's the best spot to visit?" },
+            new[] { "Welcome! It's a quiet little village but everyone is friendly. You'll love it here, I promise!",
+                    "It's a peaceful farming community. We have a shop, a park, and beautiful sunsets by the river.",
+                    "The park is lovely in the evening. And don't miss the view from the hilltop — you can see the whole valley!" },
+            "Hey there, neighbour! Beautiful day, isn't it? I was just picking some wildflowers by the road.",
+            new[] { "It sure is beautiful!", "What's happening in town lately?", "Those flowers look nice!" },
+            new[] { "The sky has been so clear! Perfect weather for a picnic. We should have one at the park sometime!",
+                    "The harvest festival is coming up next week! Everyone is decorating their houses. It's going to be amazing!",
+                    "Thank you! I'm making a bouquet for the festival decorations. I pick a different colour every day!" },
+            "There you are! I was hoping you'd come by! I have the most exciting news!",
+            new[] { "What's the exciting news?", "I missed you too!", "Want to go hang out at the park?" },
+            new[] { "The mayor is building a new community garden! And guess what — we get to help design it! How cool is that?",
+                    "You're honestly my best friend in the whole village. I baked you some cookies — here, take them!",
+                    "Yes! Let's go right now! I packed some snacks and found the perfect spot under the big oak tree!" }
         );
     }
 
@@ -355,10 +375,14 @@ public class FixAllM3
         {
             var choice = choices.GetArrayElementAtIndex(i);
             choice.FindPropertyRelative("choiceText").stringValue = choiceTexts[i];
+
+            // nextNode uses [SerializeReference] — must assign concrete instance first
             var nextNode = choice.FindPropertyRelative("nextNode");
-            nextNode.FindPropertyRelative("npcText").stringValue = responseTexts[i];
-            var nextChoices = nextNode.FindPropertyRelative("choices");
-            if (nextChoices != null) nextChoices.arraySize = 0;
+            nextNode.managedReferenceValue = new DialogueNode
+            {
+                npcText = responseTexts[i],
+                choices = new System.Collections.Generic.List<DialogueChoice>()
+            };
         }
     }
 
@@ -817,6 +841,129 @@ public class FixAllM3
             mainCam.backgroundColor = new Color(0.5f, 0.75f, 0.95f); // morning blue
             EditorUtility.SetDirty(mainCam);
         }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  17. CLAMP WAYPOINTS TO SCREEN
+    // ═══════════════════════════════════════════════════════
+
+    static void ClampWaypointsToScreen()
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return;
+
+        float margin = 0.6f;
+        Vector3 minW = cam.ViewportToWorldPoint(new Vector3(0, 0, cam.nearClipPlane));
+        Vector3 maxW = cam.ViewportToWorldPoint(new Vector3(1, 1, cam.nearClipPlane));
+
+        // Find or create a Waypoints parent
+        GameObject wpParent = GameObject.Find("Waypoints");
+        if (wpParent == null)
+        {
+            wpParent = new GameObject("Waypoints");
+            Debug.Log("[FixAll] Created Waypoints parent");
+        }
+
+        // Define default waypoint positions within screen bounds
+        string[] wpNames = { "WP_Home", "WP_Shop", "WP_Farm", "WP_Park" };
+        Vector3[] defaults = {
+            new Vector3(Mathf.Lerp(minW.x, maxW.x, 0.15f), Mathf.Lerp(minW.y, maxW.y, 0.4f), 0),
+            new Vector3(Mathf.Lerp(minW.x, maxW.x, 0.8f),  Mathf.Lerp(minW.y, maxW.y, 0.4f), 0),
+            new Vector3(Mathf.Lerp(minW.x, maxW.x, 0.5f),  Mathf.Lerp(minW.y, maxW.y, 0.25f), 0),
+            new Vector3(Mathf.Lerp(minW.x, maxW.x, 0.5f),  Mathf.Lerp(minW.y, maxW.y, 0.7f), 0)
+        };
+
+        Transform[] wpTransforms = new Transform[wpNames.Length];
+        for (int i = 0; i < wpNames.Length; i++)
+        {
+            GameObject wp = GameObject.Find(wpNames[i]);
+            if (wp == null)
+            {
+                wp = new GameObject(wpNames[i]);
+                wp.transform.SetParent(wpParent.transform);
+                wp.transform.position = defaults[i];
+                Debug.Log($"[FixAll] Created waypoint {wpNames[i]} at {defaults[i]}");
+            }
+            else
+            {
+                // Clamp existing waypoint inside screen bounds
+                Vector3 p = wp.transform.position;
+                p.x = Mathf.Clamp(p.x, minW.x + margin, maxW.x - margin);
+                p.y = Mathf.Clamp(p.y, minW.y + margin, maxW.y - margin);
+                wp.transform.position = p;
+            }
+            wpTransforms[i] = wp.transform;
+            EditorUtility.SetDirty(wp);
+        }
+
+        // Wire schedule entries to NPCs
+        string[] npcNames = { "NPC_ShopKeeper", "NPC_Farmer", "NPC_Villager" };
+        // Each NPC gets 3 schedule slots: morning(6h), noon(12h), evening(18h)
+        int[][] hours = { new[]{6,12,18}, new[]{6,12,18}, new[]{6,12,18} };
+        // ShopKeeper: Home→Shop→Home, Farmer: Farm→Home→Farm, Villager: Park→Shop→Home
+        int[][] wpIndices = { new[]{0,1,0}, new[]{2,0,2}, new[]{3,1,0} };
+
+        foreach (int n in new[]{0,1,2})
+        {
+            GameObject npcGO = GameObject.Find(npcNames[n]);
+            if (npcGO == null) continue;
+
+            NPCSchedule sched = npcGO.GetComponent<NPCSchedule>();
+            if (sched == null)
+            {
+                sched = npcGO.AddComponent<NPCSchedule>();
+            }
+
+            var so = new SerializedObject(sched);
+            var schedProp = so.FindProperty("_schedule");
+            schedProp.ClearArray();
+
+            for (int s = 0; s < 3; s++)
+            {
+                schedProp.InsertArrayElementAtIndex(s);
+                var entry = schedProp.GetArrayElementAtIndex(s);
+                entry.FindPropertyRelative("hour").intValue = hours[n][s];
+                entry.FindPropertyRelative("location").objectReferenceValue = wpTransforms[wpIndices[n][s]];
+            }
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(npcGO);
+            Debug.Log($"[FixAll] {npcNames[n]}: schedule wired to waypoints");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  18. ADD BARN / COOP LABELS
+    // ═══════════════════════════════════════════════════════
+
+    static void AddBarnCoopLabels()
+    {
+        // Labels are world-space TextMeshes near animal areas
+        CreateWorldLabel("BarnLabel",  "Barn",  new Vector3(7f, -0.5f, 0f));
+        CreateWorldLabel("CoopLabel",  "Coop",  new Vector3(3f, -2.5f, 0f));
+    }
+
+    static void CreateWorldLabel(string goName, string text, Vector3 position)
+    {
+        if (GameObject.Find(goName) != null) return;
+
+        GameObject go = new GameObject(goName);
+        go.transform.position = position;
+
+        TextMesh tm = go.AddComponent<TextMesh>();
+        tm.text = text;
+        tm.fontSize = 36;
+        tm.characterSize = 0.15f;
+        tm.anchor = TextAnchor.MiddleCenter;
+        tm.alignment = TextAlignment.Center;
+        tm.color = new Color(0.4f, 0.25f, 0.1f); // brown
+        tm.fontStyle = FontStyle.Bold;
+
+        // Make it render above ground sprites
+        MeshRenderer mr = go.GetComponent<MeshRenderer>();
+        if (mr != null) mr.sortingOrder = 10;
+
+        EditorUtility.SetDirty(go);
+        Debug.Log($"[FixAll] Created {goName} label at {position}");
     }
 
     // ═══════════════════════════════════════════════════════

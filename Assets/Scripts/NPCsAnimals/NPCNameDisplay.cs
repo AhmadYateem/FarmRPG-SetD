@@ -55,10 +55,16 @@ public class NPCNameDisplay : MonoBehaviour
 
     void LateUpdate()
     {
-        // billboard — always face camera
+        // billboard — always face camera, and counteract parent scale flip
         if (_worldCanvas != null && Camera.main != null)
         {
             _worldCanvas.transform.forward = Camera.main.transform.forward;
+
+            // If parent is flipped (negative x scale), counter-flip the canvas
+            Vector3 canvasScale = _worldCanvas.transform.localScale;
+            float parentScaleX = transform.lossyScale.x;
+            canvasScale.x = Mathf.Abs(canvasScale.x) * Mathf.Sign(parentScaleX);
+            _worldCanvas.transform.localScale = canvasScale;
         }
     }
 

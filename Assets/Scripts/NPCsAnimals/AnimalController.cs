@@ -3,7 +3,8 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Handles animal interaction — feed and pet with E key when nearby.
-/// Manages hunger/happiness via AnimalData and fires GameEvents.
+/// Walking over an animal auto-collects its product if ready.
+/// Animals can be fed multiple times per day.
 /// </summary>
 public class AnimalController : MonoBehaviour
 {
@@ -11,11 +12,12 @@ public class AnimalController : MonoBehaviour
     [SerializeField] private float _interactRange = 2f;
     [SerializeField] private int _feedAmount = 25;
     [SerializeField] private int _petAmount  = 15;
+    [SerializeField] private float _collectRange = 1.2f;
 
     private Animator _animator;
     private Transform _playerTransform;
-    private bool _fedToday;
     private bool _pettedToday;
+    private bool _collectedThisVisit;
 
     void Start()
     {
@@ -24,7 +26,6 @@ public class AnimalController : MonoBehaviour
         GameObject player = GameObject.FindWithTag("Player");
         if (player != null) _playerTransform = player.transform;
 
-        // reset daily flags on new day
         GameEvents.OnDayAdvanced.AddListener(OnDayAdvanced);
     }
 
@@ -35,7 +36,6 @@ public class AnimalController : MonoBehaviour
 
     void Update()
     {
-        // idle animation
         if (_animator != null)
             _animator.SetFloat("Speed", 0f);
 
@@ -43,10 +43,21 @@ public class AnimalController : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, _playerTransform.position);
 
+        // Press E to feed (can do multiple times) or pet
         if (dist <= _interactRange && Keyboard.current[Key.E].wasPressedThisFrame)
         {
             Interact();
         }
+
+        // Auto-collect product when walking over the animal
+        if (dist <= _collectRange && _animalData.productionReady && !_collectedThisVisit)
+        {
+            AutoCollect();
+        }
+
+        // Reset collect flag when player leaves range
+        if (dist > _collectRange)
+            _collectedThisVisit = false;
     }
 
     [ContextMenu("Interact")]
@@ -54,7 +65,8 @@ public class AnimalController : MonoBehaviour
     {
         if (_animalData == null) return;
 
-        if (!_fedToday)
+        // Feeding can be done multiple times
+        if (_animalData.hunger < 100)
         {
             Feed();
         }
@@ -64,14 +76,14 @@ public class AnimalController : MonoBehaviour
         }
         else
         {
-            Debug.Log($"{_animalData.animalName} has already been fed and petted today.");
+            // Still allow petting for happiness
+            Pet();
         }
     }
 
     private void Feed()
     {
         _animalData.hunger = Mathf.Clamp(_animalData.hunger + _feedAmount, 0, 100);
-        _fedToday = true;
         GameEvents.OnAnimalFed.Invoke(_animalData.animalName);
         Debug.Log($"Fed {_animalData.animalName}! Hunger: {_animalData.hunger}");
     }
@@ -84,15 +96,23 @@ public class AnimalController : MonoBehaviour
         Debug.Log($"Petted {_animalData.animalName}! Happiness: {_animalData.happiness}");
     }
 
+    private void AutoCollect()
+    {
+        if (AnimalManager.Instance == null) return;
+        string product = AnimalManager.Instance.CollectProduct(_animalData);
+        if (product != null)
+        {
+            _collectedThisVisit = true;
+            GameEvents.OnAnimalFed.Invoke(_animalData.animalName); // flash feedback
+            Debug.Log($"Auto-collected {product} from {_animalData.animalName}!");
+        }
+    }
+
     private void OnDayAdvanced()
     {
-        _fedToday = false;
         _pettedToday = false;
 
-        // hunger decreases each day if not fed
         _animalData.hunger = Mathf.Clamp(_animalData.hunger - 15, 0, 100);
-
-        // happiness slowly drops
         _animalData.happiness = Mathf.Clamp(_animalData.happiness - 10, 0, 100);
     }
 
