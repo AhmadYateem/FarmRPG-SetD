@@ -29,18 +29,21 @@ public class AnimalManager : MonoBehaviour
 
     private void OnDayAdvanced()
     {
-        // check production readiness for each animal
         foreach (AnimalController animal in _animals)
         {
             AnimalData data = animal.GetAnimalData();
             if (data == null) continue;
 
-            // animal produces if hunger > 40 and happiness > 30
-            if (data.hunger > 40 && data.happiness > 30)
+            // Animal produces next day if both hunger and happiness >= 50 (half the bar)
+            if (data.hunger >= 50 && data.happiness >= 50)
             {
                 data.productionReady = true;
                 Debug.Log($"{data.animalName} has a product ready to collect!");
             }
+
+            // Daily decrease — hunger and happiness drop each day
+            data.hunger    = Mathf.Clamp(data.hunger    - 15, 0, 100);
+            data.happiness = Mathf.Clamp(data.happiness - 10, 0, 100);
         }
     }
 
@@ -60,12 +63,16 @@ public class AnimalManager : MonoBehaviour
         if (data == null || !data.productionReady) return null;
 
         data.productionReady = false;
+        string product;
         switch (data.animalType)
         {
-            case AnimalData.AnimalType.Cow:     return "Milk";
-            case AnimalData.AnimalType.Sheep:   return "Wool";
-            case AnimalData.AnimalType.Chicken: return "Egg";
-            default: return "Product";
+            case AnimalData.AnimalType.Cow:     product = "Milk"; break;
+            case AnimalData.AnimalType.Sheep:   product = "Wool"; break;
+            case AnimalData.AnimalType.Chicken: product = "Egg";  break;
+            default: product = "Product"; break;
         }
+
+        GameEvents.OnProductCollected.Invoke(product);
+        return product;
     }
 }

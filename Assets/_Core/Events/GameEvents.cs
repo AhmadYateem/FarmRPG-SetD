@@ -23,4 +23,7 @@ public class GameEvents : MonoBehaviour
     // animal interaction events
     public static UnityEvent<string> OnAnimalFed    = new UnityEvent<string>();
     public static UnityEvent<string> OnAnimalPetted = new UnityEvent<string>();
+
+    // product collected — fired when egg/milk/wool is collected (productName)
+    public static UnityEvent<string> OnProductCollected = new UnityEvent<string>();
 }

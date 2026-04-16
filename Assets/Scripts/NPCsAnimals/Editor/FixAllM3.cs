@@ -30,6 +30,8 @@ public class FixAllM3
         SetupDayNightCycle();
         ClampWaypointsToScreen();
         AddBarnCoopLabels();
+        FixNPCSprites();
+        SetupInventoryPanel();
 
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
             UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
@@ -152,7 +154,7 @@ public class FixAllM3
 
         // Hint text
         MakeText("HintText", panel.transform,
-            "WASD move | E interact | F friends | G products",
+            "WASD move | E feed/talk | P pet | F friends | G products",
             10, TextAnchor.MiddleCenter,
             new Vector2(0, -93), new Vector2(0, 22), true);
 
@@ -193,7 +195,7 @@ public class FixAllM3
         rt.anchorMax = new Vector2(0.9f, 0f);
         rt.pivot = new Vector2(0.5f, 0);
         rt.anchoredPosition = new Vector2(0, 20);
-        rt.sizeDelta = new Vector2(0, 200);
+        rt.sizeDelta = new Vector2(0, 260);
 
         Image img = dp.GetComponent<Image>();
         if (img != null) img.color = new Color(0.06f, 0.06f, 0.14f, 0.94f);
@@ -230,8 +232,8 @@ public class FixAllM3
         {
             npcT.gameObject.layer = 5;
             RectTransform nrt = npcT.GetComponent<RectTransform>();
-            nrt.anchorMin = new Vector2(0, 0.3f);
-            nrt.anchorMax = new Vector2(1, 0.8f);
+            nrt.anchorMin = new Vector2(0, 0.42f);
+            nrt.anchorMax = new Vector2(1, 0.82f);
             nrt.pivot = new Vector2(0.5f, 0.5f);
             nrt.anchoredPosition = Vector2.zero;
             nrt.offsetMin = new Vector2(20, 0);
@@ -249,18 +251,18 @@ public class FixAllM3
             }
         }
 
-        // ChoicesContainer — bottom
+        // ChoicesContainer — bottom 40% of panel
         Transform choicesT = dp.Find("ChoicesContainer");
         if (choicesT != null)
         {
             choicesT.gameObject.layer = 5;
             RectTransform crt = choicesT.GetComponent<RectTransform>();
             crt.anchorMin = new Vector2(0, 0);
-            crt.anchorMax = new Vector2(1, 0.3f);
+            crt.anchorMax = new Vector2(1, 0.40f);
             crt.pivot = new Vector2(0.5f, 0);
             crt.anchoredPosition = Vector2.zero;
             crt.offsetMin = new Vector2(20, 5);
-            crt.offsetMax = new Vector2(-20, 0);
+            crt.offsetMax = new Vector2(-20, -2);
 
             // Ensure vertical layout
             var vlg = choicesT.GetComponent<VerticalLayoutGroup>();
@@ -568,7 +570,7 @@ public class FixAllM3
             irt.sizeDelta = new Vector2(-20, 45);
             obj.AddComponent<CanvasRenderer>();
             Text txt = obj.AddComponent<Text>();
-            txt.text = "Press E: Feed first, then Pet\nHunger/Happiness reset daily";
+            txt.text = "E: Feed  |  P: Pet\nHunger/Happiness reset daily";
             txt.fontSize = 12;
             txt.fontStyle = FontStyle.Italic;
             txt.color = new Color(0.7f, 0.7f, 0.7f);
@@ -964,6 +966,151 @@ public class FixAllM3
 
         EditorUtility.SetDirty(go);
         Debug.Log($"[FixAll] Created {goName} label at {position}");
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  19. FIX NPC SPRITES (use better asset pack characters)
+    // ═══════════════════════════════════════════════════════
+
+    static void FixNPCSprites()
+    {
+        string projectRoot = System.IO.Path.GetDirectoryName(Application.dataPath);
+
+        // Farmer = mophair, Villager = longhair
+        CopyImportAndAssign(projectRoot, "mophair_idle_strip9.png", "farmer_new.png", 9, "NPC_Farmer");
+        CopyImportAndAssign(projectRoot, "longhair_idle_strip9.png", "villager_new.png", 9, "NPC_Villager");
+    }
+
+    static void CopyImportAndAssign(string projectRoot, string srcFileName, string dstFileName, int frameCount, string goName)
+    {
+        string srcPath = System.IO.Path.Combine(projectRoot,
+            "CMPS288_Project_Assets", "Sunnyside_World_ASSET_PACK_V2.1",
+            "Sunnyside_World_Assets", "Characters", "Human", "IDLE", srcFileName);
+        string dstAssetPath = "Assets/Art/Sprites/" + dstFileName;
+        string fullDst = System.IO.Path.Combine(projectRoot, "Assets", "Art", "Sprites", dstFileName);
+
+        // Copy file if not already present
+        if (!System.IO.File.Exists(fullDst))
+        {
+            if (!System.IO.File.Exists(srcPath))
+            {
+                Debug.LogWarning($"[FixAll] Source sprite not found: {srcPath}");
+                return;
+            }
+            System.IO.File.Copy(srcPath, fullDst);
+        }
+
+        // First import — single sprite to read texture dimensions
+        AssetDatabase.ImportAsset(dstAssetPath, ImportAssetOptions.ForceUpdate);
+
+        TextureImporter importer = AssetImporter.GetAtPath(dstAssetPath) as TextureImporter;
+        if (importer == null) return;
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.isReadable = true;
+        importer.SaveAndReimport();
+
+        // Read texture dimensions
+        Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(dstAssetPath);
+        if (tex == null) return;
+        int frameWidth = tex.width / frameCount;
+        int frameHeight = tex.height;
+
+        // Switch to multiple and set up sprite sheet
+        importer.spriteImportMode = SpriteImportMode.Multiple;
+        importer.spritePixelsPerUnit = 16;
+        string baseName = System.IO.Path.GetFileNameWithoutExtension(dstFileName);
+        SpriteMetaData[] spriteSheet = new SpriteMetaData[frameCount];
+        for (int i = 0; i < frameCount; i++)
+        {
+            spriteSheet[i] = new SpriteMetaData
+            {
+                name = baseName + "_" + i,
+                rect = new Rect(i * frameWidth, 0, frameWidth, frameHeight),
+                alignment = (int)SpriteAlignment.Center,
+                pivot = new Vector2(0.5f, 0.5f)
+            };
+        }
+        importer.spritesheet = spriteSheet;
+        importer.SaveAndReimport();
+
+        // Assign first frame to the NPC SpriteRenderer
+        GameObject go = GameObject.Find(goName);
+        if (go == null) return;
+
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(dstAssetPath);
+        foreach (Object a in assets)
+        {
+            if (a is Sprite s && s.name == baseName + "_0")
+            {
+                SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.sprite = s;
+                    EditorUtility.SetDirty(sr);
+                }
+                break;
+            }
+        }
+
+        Debug.Log($"[FixAll] {goName} sprite updated to {dstFileName}");
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  20. SETUP INVENTORY PANEL (always-visible HUD)
+    // ═══════════════════════════════════════════════════════
+
+    static void SetupInventoryPanel()
+    {
+        Canvas canvas = FindMainCanvas();
+        if (canvas == null) return;
+
+        // Remove old panel if exists
+        for (int i = canvas.transform.childCount - 1; i >= 0; i--)
+        {
+            if (canvas.transform.GetChild(i).name == "InventoryPanel")
+                Object.DestroyImmediate(canvas.transform.GetChild(i).gameObject);
+        }
+
+        // Create inventory HUD — top-right corner
+        GameObject panel = new GameObject("InventoryPanel");
+        panel.layer = 5;
+        panel.transform.SetParent(canvas.transform, false);
+        RectTransform rt = panel.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1, 1);
+        rt.anchorMax = new Vector2(1, 1);
+        rt.pivot = new Vector2(1, 1);
+        rt.anchoredPosition = new Vector2(-10, -10);
+        rt.sizeDelta = new Vector2(280, 50);
+        Image img = panel.AddComponent<Image>();
+        img.color = new Color(0.06f, 0.08f, 0.14f, 0.88f);
+
+        // Title
+        MakeText("InventoryTitle", panel.transform,
+            "Inventory", 14, TextAnchor.MiddleCenter,
+            new Vector2(0, -2), new Vector2(0, 20), true);
+
+        // Counts
+        GameObject countsObj = MakeText("InventoryCounts", panel.transform,
+            "Egg: 0  |  Milk: 0  |  Wool: 0", 13, TextAnchor.MiddleCenter,
+            new Vector2(0, -24), new Vector2(0, 22), true);
+
+        // Wire InventoryManager
+        GameObject managers = GameObject.Find("GameManagers");
+        if (managers == null) managers = new GameObject("GameManagers");
+
+        InventoryManager inv = managers.GetComponent<InventoryManager>();
+        if (inv == null) inv = managers.AddComponent<InventoryManager>();
+
+        var so = new SerializedObject(inv);
+        so.FindProperty("_inventoryHudText").objectReferenceValue = countsObj.GetComponent<Text>();
+        so.ApplyModifiedProperties();
+        EditorUtility.SetDirty(inv);
+
+        Debug.Log("[FixAll] InventoryPanel created — top-right HUD");
     }
 
     // ═══════════════════════════════════════════════════════
