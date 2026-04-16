@@ -50,6 +50,8 @@ public class AnimalProductionUI : MonoBehaviour
                 if (product != null)
                 {
                     _collectedProducts.Add(product);
+                    if (InventoryUI.Instance != null)
+                        InventoryUI.Instance.AddItem(product);
                     Debug.Log($"Collected {product} from {data.animalName}!");
                 }
             }
